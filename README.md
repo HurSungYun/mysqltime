@@ -24,11 +24,28 @@ It can be either `time of day` or `duration`.
 
 ```
 type Time interface {
-    SetTimeOfDay(int64) error // maybe?
-    GetTimeOfDay() (int64, error) // maybe?
-    SetDuration(time.Duration, sign bool) error
-    GetDuration() (time.Duration, bool)
+    SetDuration(time.Duration) error
+    GetDuration() time.Duration
 }
+```
+
+## expected use cases
+
+assume some users' working hour data
+
+```
+
+type DoNotDisturbTime struct {
+    UserID        int64          `db:"user_id"`
+    WorkHourStart mysqltime.Time `db:"work_hour_start"`
+    WorkHourEnd   mysqltime.Time `db:"work_hour_end"`
+}
+
+...
+
+// sqlx style
+rows, err := db.NamedQuery(`SELECT * FROM do_not_disturb_time WHERE user_id = ?`, userID)
+
 ```
 
 ## references
