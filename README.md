@@ -25,7 +25,7 @@ It can be either `time of day` or `duration`.
 ```
 type Time interface {
     SetDuration(time.Duration) error
-    GetDuration() time.Duration
+    GetDuration() (time.Duration, bool) // data type is nullable
 }
 ```
 
