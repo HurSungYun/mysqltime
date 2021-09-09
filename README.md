@@ -35,7 +35,7 @@ assume some users' working hour data
 
 ```
 
-type DoNotDisturbTime struct {
+type WorkHour struct {
     UserID        int64          `db:"user_id"`
     WorkHourStart mysqltime.Time `db:"work_hour_start"`
     WorkHourEnd   mysqltime.Time `db:"work_hour_end"`
@@ -44,7 +44,7 @@ type DoNotDisturbTime struct {
 ...
 
 // sqlx style
-rows, err := db.NamedQuery(`SELECT * FROM do_not_disturb_time WHERE user_id = ?`, userID)
+rows, err := db.NamedQuery(`SELECT * FROM work_hour WHERE user_id = ?`, userID)
 
 ```
 
