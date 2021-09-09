@@ -2,7 +2,7 @@
 
 ## motivation
 
-MySQL has [the TIME type](https://dev.mysql.com/doc/refman/8.0/en/time.html) which supports saving times.
+MySQL has [the TIME type](https://dev.mysql.com/doc/refman/8.0/en/time.html) which supports storing time data.
 
 According to its spec, it is said that 
 
