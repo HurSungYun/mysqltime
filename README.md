@@ -18,7 +18,7 @@ https://github.com/go-sql-driver/mysql/issues/849
 
 Therefore, it would be really great to introduce custom data type `mysqltime.Time` which automatically marshal/unmarshal data of mysql TIME type implementing mysql driver interface.
 
-It can be either `time of day` or `duration`.
+It can be either `time of day` or `duration`, but `duration` can cover all use case scenarioes.
 
 ## interface
 
