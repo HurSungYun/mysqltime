@@ -24,8 +24,14 @@ It can be either `time of day` or `duration`.
 
 ```
 type Time interface {
-    TimeOfDay() (int64, error) // maybe?
-    Duration() time.Duration
+    SetTimeOfDay(int64) error // maybe?
+    GetTimeOfDay() (int64, error) // maybe?
+    SetDuration(time.Duration, sign bool) error
+    GetDuration() (time.Duration, bool)
 }
 ```
+
+## references
+
+https://github.com/jackc/pgtype
 
