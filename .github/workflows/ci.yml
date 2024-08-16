@@ -1,4 +1,4 @@
-name: Go Test
+name: Go Test with MySQL Integration
 
 on:
   push:
@@ -12,6 +12,22 @@ jobs:
   test:
     runs-on: ubuntu-latest
 
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: root_password
+          MYSQL_DATABASE: testdb
+          MYSQL_USER: testuser
+          MYSQL_PASSWORD: testpassword
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1 -u root --password=root_password"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+
     steps:
       - name: Check out code
         uses: actions/checkout@v3
@@ -19,10 +35,19 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v4
         with:
-          go-version: '1.23' # Adjust the Go version to match your project
+          go-version: '1.20' # Adjust this to your Go version
+
+      - name: Wait for MySQL to be ready
+        run: until mysqladmin ping -h 127.0.0.1 -u root --password=root_password --silent; do echo waiting for MySQL; sleep 5; done
+
+      - name: Run migrations
+        run: |
+          mysql -h 127.0.0.1 -u root --password=root_password testdb < ./scripts/init.sql
 
       - name: Install dependencies
         run: go mod tidy
 
       - name: Run tests
+        env:
+          MYSQL_DSN: "testuser:testpassword@tcp(127.0.0.1:3306)/testdb"
         run: go test ./... -v
