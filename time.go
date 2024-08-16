@@ -2,9 +2,10 @@ package mysqltime
 
 import (
     "database/sql/driver"
-    "errors"
+    _ "errors"
     "fmt"
     "strings"
+	"strconv"
     "time"
 )
 
@@ -113,25 +114,84 @@ func (t Time) String() string {
 
 // parseMySQLTime parses a MySQL TIME string into a time.Duration.
 func parseMySQLTime(s string) (time.Duration, error) {
-    if len(s) < 8 {
-        return 0, errors.New("invalid TIME format")
+    // Handle cases with colons directly
+    if strings.Contains(s, ":") {
+        negative := false
+        if strings.HasPrefix(s, "-") {
+            negative = true
+            s = s[1:]
+        }
+
+        var hours, minutes, seconds int64
+        parts := strings.Split(s, ":")
+        if len(parts) == 2 { // Cases like '11:12' should be interpreted as '11:12:00'
+            parsedHours, err := strconv.ParseInt(parts[0], 10, 64)
+            if err != nil {
+                return 0, fmt.Errorf("invalid TIME format: %s", s)
+            }
+            parsedMinutes, err := strconv.ParseInt(parts[1], 10, 64)
+            if err != nil {
+                return 0, fmt.Errorf("invalid TIME format: %s", s)
+            }
+            hours, minutes, seconds = parsedHours, parsedMinutes, 0
+        } else if len(parts) == 3 { // Cases like '11:12:13'
+            parsedHours, err := strconv.ParseInt(parts[0], 10, 64)
+            if err != nil {
+                return 0, fmt.Errorf("invalid TIME format: %s", s)
+            }
+            parsedMinutes, err := strconv.ParseInt(parts[1], 10, 64)
+            if err != nil {
+                return 0, fmt.Errorf("invalid TIME format: %s", s)
+            }
+            parsedSeconds, err := strconv.ParseInt(parts[2], 10, 64)
+            if err != nil {
+                return 0, fmt.Errorf("invalid TIME format: %s", s)
+            }
+            hours, minutes, seconds = parsedHours, parsedMinutes, parsedSeconds
+        } else {
+            return 0, fmt.Errorf("invalid TIME format: %s", s)
+        }
+
+        duration := time.Duration(hours)*time.Hour + time.Duration(minutes)*time.Minute + time.Duration(seconds)*time.Second
+        if negative {
+            duration = -duration
+        }
+        return duration, nil
     }
 
-    negative := false
-    if strings.HasPrefix(s, "-") {
-        negative = true
-        s = s[1:]
+    // Handle cases without colons (abbreviated times)
+    switch len(s) {
+    case 6: // HHMMSS format
+        hours, err := strconv.Atoi(s[:2])
+        if err != nil {
+            return 0, err
+        }
+        minutes, err := strconv.Atoi(s[2:4])
+        if err != nil {
+            return 0, err
+        }
+        seconds, err := strconv.Atoi(s[4:])
+        if err != nil {
+            return 0, err
+        }
+        return time.Duration(hours)*time.Hour + time.Duration(minutes)*time.Minute + time.Duration(seconds)*time.Second, nil
+    case 4: // MMSS format
+        minutes, err := strconv.Atoi(s[:2])
+        if err != nil {
+            return 0, err
+        }
+        seconds, err := strconv.Atoi(s[2:])
+        if err != nil {
+            return 0, err
+        }
+        return time.Duration(minutes)*time.Minute + time.Duration(seconds)*time.Second, nil
+    case 2: // SS format
+        seconds, err := strconv.Atoi(s)
+        if err != nil {
+            return 0, err
+        }
+        return time.Duration(seconds) * time.Second, nil
+    default:
+        return 0, fmt.Errorf("invalid TIME format: %s", s)
     }
-
-    var hours, minutes, seconds int64
-    n, err := fmt.Sscanf(s, "%d:%d:%d", &hours, &minutes, &seconds)
-    if err != nil || n != 3 {
-        return 0, errors.New("invalid TIME format")
-    }
-
-    duration := time.Duration(hours)*time.Hour + time.Duration(minutes)*time.Minute + time.Duration(seconds)*time.Second
-    if negative {
-        duration = -duration
-    }
-    return duration, nil
 }

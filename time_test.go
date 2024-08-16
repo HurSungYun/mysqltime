@@ -65,6 +65,39 @@ func TestParseMySQLTime(t *testing.T) {
 	}
 }
 
+func TestParseMySQLTimeWithAbbreviations(t *testing.T) {
+	testCases := []struct {
+		input    string
+		expected time.Duration
+		valid    bool
+	}{
+		// Case: '11:12' -> MySQL interprets it as '11:12:00'
+		{"11:12", 11*time.Hour + 12*time.Minute, true},
+
+		// Case: '1112' -> MySQL interprets it as '00:11:12'
+		{"1112", 11*time.Minute + 12*time.Second, true},
+
+		// Case: '12' -> MySQL interprets it as '00:00:12'
+		{"12", 12 * time.Second, true},
+
+		// Case: '111212' -> MySQL interprets it as '11:12:12'
+		{"111212", 11*time.Hour + 12*time.Minute + 12*time.Second, true},
+
+		// Invalid case (non-time value)
+		{"invalid", 0, false},
+	}
+
+	for _, tc := range testCases {
+		duration, err := parseMySQLTime(tc.input)
+		if tc.valid {
+			assert.NoError(t, err)
+			assert.Equal(t, tc.expected, duration, "unexpected duration for input '%s'", tc.input)
+		} else {
+			assert.Error(t, err, "expected an error for input '%s'", tc.input)
+		}
+	}
+}
+
 func TestTime_UnmarshalText(t *testing.T) {
 	var mt Time
 
