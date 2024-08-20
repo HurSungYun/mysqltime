@@ -1,0 +1,26 @@
+version: '3.8'
+
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: mysqltime_test_db
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: root_password
+      MYSQL_DATABASE: testdb
+      MYSQL_USER: testuser
+      MYSQL_PASSWORD: testpassword
+    ports:
+      - "3306:3306"
+    volumes:
+      - db_data:/var/lib/mysql
+      - ./scripts/init.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      retries: 5
+      start_period: 30s
+      timeout: 5s
+
+volumes:
+  db_data:
